@@ -26,11 +26,11 @@
     ],
 
     "actions": [
-      { "type": "Button", "label": "Aus", "onClick": "MilightV6_setMode($id,0);" },
-      { "type": "Button", "label": "Farbig ein", "onClick": "MilightV6_setMode($id,1);" },
-      { "type": "Button", "label": "Farbe auf rot", "onClick": "MilightV6_setHue($id,0xFF);" },
-      { "type": "Button", "label": "Farbe auf grün", "onClick": "MilightV6_setHue($id,0x80);" },
-      { "type": "Button", "label": "Weiß ein", "onClick": "MilightV6_setMode($id,2);" }
+      { "type": "Button", "label": "Aus", "onClick": "MILIGHTV6_SetMode($id,0);" },
+      { "type": "Button", "label": "Farbig ein", "onClick": "MILIGHTV6_SetMode($id,1);" },
+      { "type": "Button", "label": "Farbe auf rot", "onClick": "MILIGHTV6_SetHue($id,0xFF);" },
+      { "type": "Button", "label": "Farbe auf grün", "onClick": "MILIGHTV6_SetHue($id,0x80);" },
+      { "type": "Button", "label": "Weiß ein", "onClick": "MILIGHTV6_SetMode($id,2);" }
     ],
 
     "status": [
