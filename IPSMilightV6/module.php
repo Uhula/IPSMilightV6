@@ -202,25 +202,25 @@ class IPSMilightV6 extends IPSModule {
      return $result;
    }
 
-   public function SetHue(integer $hue) {
+   public function xxSetHue(integer $hue) {
      $hue = $hue & 0xff;
      $this->SetValueInteger("Hue", $hue );
      return $this->Update();
    }
 
-   public function SetSaturation(integer $saturation) {
+   public function xxSetSaturation(integer $saturation) {
      $saturation = $saturation & 0x64;
      $this->SetValueInteger("Saturation", $saturation );
      return $this->Update();
    }
 
-   public function SetBrightness(integer $brightness) {
+   public function xxSetBrightness(integer $brightness) {
      $brightness = $brightness & 0x64;
      $this->SetValueInteger("Brightness", $brightness );
      return $this->Update();
    }
 
-   public function SetMode(integer $mode) {
+   public function xxSetMode(integer $mode) {
      $this->SetValueInteger("Mode", $mode );
      return $this->Update();
    }
@@ -228,16 +228,16 @@ class IPSMilightV6 extends IPSModule {
    public function RequestAction($Ident, $Value) {
      switch($Ident) {
        case "Hue":
-         $this->SetHue( $Value );
+         $this->xxSetHue( $Value );
          break;
        case "Saturation":
-         $this->SetSaturation( $Value );
+         $this->xxSetSaturation( $Value );
          break;
        case "Brightness":
-         $this->SetBrightness( $Value );
+         $this->xxSetBrightness( $Value );
          break;
        case "Mode":
-          $this->SetMode( $Value );
+          $this->xxSetMode( $Value );
           break;
        default:
          throw new Exception("Invalid ident");
