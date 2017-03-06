@@ -19,6 +19,12 @@ class IPSMilightV6 extends IPSModule {
    const TYPE_BRIDGE = 1;
    const TYPE_RGBWW  = 2;
 
+   const MODE_OFF   = 0;
+   const MODE_COLOR = 1;
+   const MODE_WHITE = 2;
+   const MODE_NIGHT = 3;
+   const MODE_DISCO = 4;
+
    // Log-Level Konstante
    const LOG_NONE     = 0x00;
    const LOG_ERRORS   = 0x01;
@@ -113,26 +119,26 @@ class IPSMilightV6 extends IPSModule {
 
      $this->RegisterProfileIntegerAssociation("MilightV6.Type", "", "", "",
         [
-         [self::TYPE_RGBW,"RGBW"],
-         [self::TYPE_BRIDGE,"BRIDGE"],
-         [self::TYPE_RGBWW,"RGBWW"]
-        ], 1);
+         [self::TYPE_RGBW,"RGBW","",-1],
+         [self::TYPE_BRIDGE,"BRIDGE","",-1],
+         [self::TYPE_RGBWW,"RGBWW","",-1]
+      ], 1);
      $this->RegisterProfileIntegerAssociation("MilightV6.Zone", "", "", "",
         [
-         [self::ZONE_ALL,"Alle Zonen"],
-         [self::ZONE_1,"Zone 1"],
-         [self::ZONE_2,"Zone 2"],
-         [self::ZONE_3,"Zone 2"],
-         [self::ZONE_4,"Zone 4"]
-        ], 0);
+         [self::ZONE_ALL,"Alle Zonen","",-1],
+         [self::ZONE_1,"Zone 1","",-1],
+         [self::ZONE_2,"Zone 2","",-1],
+         [self::ZONE_3,"Zone 2","",-1],
+         [self::ZONE_4,"Zone 4","",-1]
+      ], 1);
      $this->RegisterProfileIntegerAssociation("MilightV6.Mode", "", "", "",
           [
-           [self::MODE_OFF,"Aus"],
-           [self::MODE_COLOR,"Farbig"],
-           [self::ZONE_WHITE,"Weiß"],
-           [self::ZONE_NIGHT,"Nacht"],
-           [self::ZONE_DISCO,"Disco"]
-          ], 0);
+           [self::MODE_OFF,"Aus","",-1],
+           [self::MODE_COLOR,"Farbig","",-1],
+           [self::MODE_WHITE,"Weiß","",-1],
+           [self::MODE_NIGHT,"Nacht","",-1],
+           [self::MODE_DISCO,"Disco","",-1]
+        ], 1);
 
      //Variablen erstellen
      $this->RegisterVariableInteger("Hue", "Farbe 0..255", "",0);
@@ -176,19 +182,19 @@ class IPSMilightV6 extends IPSModule {
 
      // Anwenden der Änderungen
      switch ($this->GetValueInteger("Mode")) {
-        case 0 : //off
+        case SELF::MODE_OFF : //off
            $this->switchOff($type, $zone);
            break;
-        case 1 : //farbig
+        case SELF::MODE_COLOR : //farbig
            $this->setColor($type, $zone, $this->GetValueInteger("Hue"));
            break;
-        case 2 : //weiß
+        case SELF::MODE_WHITE : //weiß
            $this->switchOnWhite($type, $zone);
            break;
-        case 3 : //Nacht
+        case SELF::MODE_NIGHT : //Nacht
            $this->switchOnNight($type, $zone);
            break;
-        case 4 : //Disco
+        case SELF::MODE_DISCO : //Disco
            $this->setDiscoMode($type, $zone, 0);
            break;
 
