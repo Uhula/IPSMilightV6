@@ -1,0 +1,14 @@
+{
+    "id": "{5951C06D-D1DA-49A7-B923-AFD65A1DDF9D}",
+    "name": "IPSMilightV6",
+    "type": 3,
+    "vendor": "Milight",
+    "aliases":
+    [
+	    "IPSMilightV6"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "MILIGHTV6"
+}

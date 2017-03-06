@@ -1,0 +1,42 @@
+{
+  "elements": [
+      { "type": "Label", "label": "*** Milight V6" },
+      { "type": "Label", "label": "-------------------------------" },
+
+      { "type": "ValidationTextBox", "name": "URL", "caption": "URL, IP-Adresse" },
+
+      { "type": "NumberSpinner", "name": "Port", "caption": "Port" },
+
+      { "type": "Select", "name": "Type", "caption": "Lampentyp",
+        "options": [
+            { "label": "RGBW", "value": 0 },
+            { "label": "BRIDGE", "value": 1 },
+            { "label": "RGBWW", "value": 2 }
+        ]
+      },
+      { "type": "Select", "name": "Zone", "caption": "Lampenzone",
+        "options": [
+            { "label": "Alle (1-4)", "value": 0 },
+            { "label": "Zone 1", "value": 1 },
+            { "label": "Zone 2", "value": 2 },
+            { "label": "Zone 3", "value": 3 },
+            { "label": "Zone 4", "value": 4 }
+        ]
+      },
+    ],
+
+    "actions": [
+      { "type": "Button", "label": "Aus", "onClick": "MilightV6_setMode($id,0);" },
+      { "type": "Button", "label": "Farbig ein", "onClick": "MilightV6_setMode($id,1);" },
+      { "type": "Button", "label": "Farbe auf rot", "onClick": "MilightV6_setHue($id,0xFF);" },
+      { "type": "Button", "label": "Farbe auf grün", "onClick": "MilightV6_setHue($id,0x80);" },
+      { "type": "Button", "label": "Weiß ein", "onClick": "MilightV6_setMode($id,2);" }
+    ],
+
+    "status": [
+      { "code": 101, "icon": "active", "caption": "Instanz wird erstellt" },
+      { "code": 102, "icon": "active", "caption": "Instanz ok" },
+      { "code": 201, "icon": "error", "caption": "Es wurde noch keine URL eingegeben" },
+      { "code": 202, "icon": "error", "caption": "Es wurde kein Port eingegeben" }
+    ]
+}
