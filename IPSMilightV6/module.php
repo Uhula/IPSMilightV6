@@ -714,24 +714,5 @@ class IPSMilightV6 extends IPSModule {
 
 }
 
-echo "Test Milight Version 6 \n";
-
-$m = new IPSMilightV6();
-$type = IPSMilightV6::TYPE_RGBWW ;
-$zone = IPSMilightV6::ZONE_4 ;
-
-//$m->detectBridges();
-
-
-$m->switchOn($type, $zone );              IPS_Sleep( 2000 );
-$m->setColorHEX($type, $zone, "006060" );   IPS_Sleep( 2000 );
-//$m->setColor($type, $zone, 0x40 );   IPS_Sleep( 2000 );
-//$m->setColor($type, $zone, 0x80 );   IPS_Sleep( 2000 );
-//$m->setBrightness($type, $zone, 100 );    IPS_Sleep( 5000 );
-//$m->setBrightness($type, $zone, 25 );     IPS_Sleep( 2000 );
-//$m->switchOff($type, $zone );
-
-
-
 
 ?>
