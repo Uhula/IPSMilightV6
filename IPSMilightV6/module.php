@@ -620,21 +620,21 @@ class IPSMilightV6 extends IPSModule {
    public functions
    ================================================================*/
    //
-   public function _switchOn($type, $zone) {
+   private function _switchOn($type, $zone) {
       return $this->executeCommand($type, $zone, "switchOn");
    }
    //
-   public function _switchOff($type, $zone) {
+   private function _switchOff($type, $zone) {
       return $this->executeCommand($type, $zone, "switchOff");
    }
 
    // Color 00..FF
-   public function _setColor($type, $zone,  $color ) {
+   private function _setColor($type, $zone,  $color ) {
       return $this->executeCommand($type, $zone, "setColor", array(5=>$color, 6=>$color, 7=>$color, 8=>$color ) );
    }
 
    // Color als hex-color #rrggbb oder rrggbb
-   public function _setColorHEX($type, $zone, $hexcolor) {
+   private function _setColorHEX($type, $zone, $hexcolor) {
 
       $hsl = $this->HEX2HSL($hexcolor);
 
@@ -657,54 +657,54 @@ class IPSMilightV6 extends IPSModule {
 
 
    // Brightness 0..100%
-   public function _setBrightness($type, $zone, $brightness) {
+   private function _setBrightness($type, $zone, $brightness) {
 	  $brightness = intval( min( 100, max( 0, $brightness) ) / 100 * 0x64);
       return $this->executeCommand($type, $zone, "setBrightness", array(5=>$brightness) );
    }
 
    // Saturation 0..100%
-   public function _setSaturation($type, $zone, $saturation) {
+   private function _setSaturation($type, $zone, $saturation) {
 	  $saturation = 0x64 - (intval( min( 100, max( 0, $saturation) ) / 100 * 0x64));
       return $this->executeCommand($type, $zone, "setSaturation", array(5=>$saturation) );
    }
 
    // Kelvin 0=2700k .. 64=6500k
-   public function _setKelvin($type, $zone, $kelvin) {
+   private function _setKelvin($type, $zone, $kelvin) {
 	  $kelvin = intval( ( min( 6500, max( 2700, $kelvin) ) - 2700 ) / (6500-2700) * 0x64);
       return $this->executeCommand($type, $zone, "setKelvin", array(5=>$kelvin) );
    }
 
    //
-   public function _switchOnWhite($type, $zone) {
+   private function _switchOnWhite($type, $zone) {
       return $this->executeCommand($type, $zone, "switchOnWhite" );
    }
 
    //
-   public function _switchOnNight($type, $zone) {
+   private function _switchOnNight($type, $zone) {
       return $this->executeCommand($type, $zone, "switchOnNight" );
    }
 
    // Disco Mode
-   public function _setDiscoMode($mode) {
+   private function _setDiscoMode($mode) {
 	  $mode = intval( min( 9, max( 0, $mode) ) );
       return $this->executeCommand("setDiscoMode", array(5=>$mode) );
    }
 
    //
-   public function _decDiscoSpeed($type, $zone) {
+   private function _decDiscoSpeed($type, $zone) {
       return $this->executeCommand($type, $zone, "decDiscoSpeed" );
    }
    //
-   public function _incDiscoSpeed($type, $zone) {
+   private function _incDiscoSpeed($type, $zone) {
       return $this->executeCommand($type, $zone, "incDiscoSpeed" );
    }
    //
-   public function _setLinkMode($type) {
+   private function _setLinkMode($type) {
       return $this->executeCommand($type, self::ZONE_ALL, "setLinkMode" );
    }
 
    //
-   public function _setUnlinkMode($type) {
+   private function _setUnlinkMode($type) {
       return $this->executeCommand($type, self::ZONE_ALL, "setUnlinkMode" );
    }
 
