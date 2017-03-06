@@ -1,11 +1,13 @@
 {
-    "id": "{5951C06D-D1DA-49A7-B923-AFD65A1DDF9D}",
+    "id": "{E93FB8D3-E6CB-416F-9A7D-9D96C5D78CAF}",
     "name": "IPSMilightV6",
     "type": 3,
     "vendor": "Milight",
     "aliases":
     [
-	    "IPSMilightV6"
+	    "IPSMilightV6",
+       "EASYLED",
+       "MiLight"
     ],
     "parentRequirements": [],
     "childRequirements": [],
