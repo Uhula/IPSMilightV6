@@ -46,7 +46,7 @@ Je Zone ist die Anzahl der Lampen nicht begrenzt.
 
 ### 3. Installation
 Im Objektbaum der IP Symcon Managment Console über die Kern-Instanz "Module" folgende URL hinzufügen:
-`git://github.com/Uhula/IPSMilightV6.git`
+`git://github.com/Uhula/IPSMilightV6.git` oder `https://github.com/Uhula/IPSMilightV6.git`.
 
 
 ### 4. Einrichten der Instanzen in IP-Symcon
@@ -69,49 +69,32 @@ Die Statusvariablen/Kategorien werden automatisch angelegt. Das Löschen einzeln
 
 ##### Statusvariablen
 
-Name          | Typ         | Beschreibung
-------------- | ----------- | ---------------------------------
-WebfrontID    | integer     | ID des Webfronts, der bei Änderungen aktualisiert werden soll
-SkinTheme     | MDSO.Theme  | Farbangabe für den Skin (Navigation, Hintergrund, Überschriften)
-AccentTheme   | MDSO.Theme  | Farbangabe für die Akzentfarbe (zB für die Bedienfelder)
-CardShadow    | MDSO.JaNein | J/N ob die Container/Karten mit Schatten angezeigt werden sollen
-Apply         | MDSO.Apply  | führt zum Anwenden der Änderungen im Webfront
+Name          | Typ            | Beschreibung
+------------- | -------------- | ---------------------------------
+Hue           | integer        | Enthält den aktuellen Farbwert (Hue, 0..360)
+Brightness    | integer        | Aktuelle Helligkeitseinstellung 0..100%
+Saturation    | integer        | Aktuelle Sättigungseinstellung bei Farben 0..100%
+Mode          | MILIGHTV6.Mode | Off / Farbig / Weiß / Nacht ...
 
 ##### Profile:
 
-Name          | Typ         | Beschreibung
-------------- | ----------- | ---------------------------------
-MDSO.Theme    | integer     | Aufnahme der Farben für Skin/Akzent  
-MDSO.JaNein   | boolean     | J/N ob die Container/Karten mit Schatten angezeigt werden sollen
-MDSO.Apply    | integer     | 0=Anwenden
+Name           | Typ         | Beschreibung
+-------------- | ----------- | ---------------------------------
+MILIGHTV6.Mode | integer     | 
 
 ### 6. WebFront
 
-Über das WebFront werden die Variablen angezeigt. Eine Änderung der Variablen führt erst durch
-"Anwenden" zur Anwendung im Webfront, da hierbei immer ein Reload des Webfronts erfolgt und es
-sonst beim Wechsel der Skin-/Akzentfarben "nervig" wäre.
 
 ### 7. PHP-Befehlsreferenz
 
-Alle PHP-Befehle erhalten den Prefix MDSO_
+Alle PHP-Befehle erhalten den Prefix MILIGHTV6_
 
-##### boolean MDSO_SetSkinTheme( integer $skintheme );  
-Setzt das angegebene Skin-Thema und aktualisiert den Webfront.  
+##### boolean MILIGHTV6_setHue( integer $hue );  
+Setzt die Farbe $hue (0..360) und schaltet die Lampen farbig ein 
 Liefert bei Erfolg true, sonst false.  
 Beispiel:  
-`MDSO_SetSkinTheme( 2 );`
+`MILIGHTV6_setHue( 0xff ); // rot`
 
-##### boolean MDSO_SetAccentTheme( integer $accenttheme );  
-Setzt das angegebene Akzent-Thema und aktualisiert den Webfront.  
-Liefert bei Erfolg true, sonst false.  
-Beispiel:  
-`MDSO_SetAccentTheme( 2 );`
-
-##### boolean MDSO_SetCardShaodw( boolean $cardshadow );  
-Setzt die Ausgabe der Schatten der Container/Karten auf den übergebenen Wert und aktualisiert den Webfront.  
-Liefert bei Erfolg true, sonst false.  
-Beispiel:  
-`MDSO_SetCardshadow( true );`
 
 
 ### 8. Changelog
