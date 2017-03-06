@@ -89,15 +89,6 @@ class IPSMilightV6 extends IPSModule {
 	  );
 
 
-
-  public function __construct($host = '192.168.2.31', $port = 5987) {
-     $this->host = $host;
-     $this->port = $port;
-  }
-
-  public function __destruct() {
-   }
-
    public function Create() {
      //Never delete this line!
      parent::Create();
