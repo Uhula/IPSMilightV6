@@ -5,9 +5,7 @@
     "vendor": "Milight",
     "aliases":
     [
-	    "IPSMilightV6",
-       "EASYLED",
-       "MiLight"
+       "MiLightV6"
     ],
     "parentRequirements": [],
     "childRequirements": [],

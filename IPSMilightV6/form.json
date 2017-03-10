@@ -1,16 +1,15 @@
 {
   "elements": [
-      { "type": "Label", "label": "*** Milight V6" },
-      { "type": "Label", "label": "-------------------------------" },
+      { "type": "Label", "label": "Milight V6 Modul. Bitte Gateway(iBox)- und Lampendaten eingeben" },
 
-      { "type": "ValidationTextBox", "name": "URL", "caption": "URL, IP-Adresse" },
+      { "type": "ValidationTextBox", "name": "URL", "caption": "IP (x.x.x.x)" },
 
-      { "type": "NumberSpinner", "name": "Port", "caption": "Port" },
+      { "type": "NumberSpinner", "name": "Port", "caption": "Port (5987)" },
 
       { "type": "Select", "name": "Type", "caption": "Lampentyp",
         "options": [
             { "label": "RGBW", "value": 0 },
-            { "label": "BRIDGE", "value": 1 },
+            { "label": "BRIDGE (iBox2)", "value": 1 },
             { "label": "RGBWW", "value": 2 }
         ]
       },
@@ -22,21 +21,33 @@
             { "label": "Zone 3", "value": 3 },
             { "label": "Zone 4", "value": 4 }
         ]
-      },
+     },
+      { "type": "ValidationTextBox", "name": "Presets", "caption": "Modus-Presets" }
     ],
 
     "actions": [
-      { "type": "Button", "label": "Aus", "onClick": "MILIGHTV6_xxSetMode($id,0);" },
-      { "type": "Button", "label": "Farbig ein", "onClick": "MILIGHTV6_xxSetMode($id,1);" },
-      { "type": "Button", "label": "Farbe auf rot", "onClick": "MILIGHTV6_xxSetHue($id,0xFF);" },
-      { "type": "Button", "label": "Farbe auf grün", "onClick": "MILIGHTV6_xxSetHue($id,0x80);" },
-      { "type": "Button", "label": "Weiß ein", "onClick": "MILIGHTV6_xxSetMode($id,2);" }
+      { "type": "Button", "name": "SetMode0", "label": "Aus", "onClick":"MILIGHTV6_SetMode($id, 0);"},
+      { "type": "NumberSpinner", "name": "ColorHue", "caption": "Farbwert 0..360°" },
+      { "type": "NumberSpinner", "name": "ColorSaturation", "caption": "Sättigung 0..100%" },
+      { "type": "NumberSpinner", "name": "ColorBrightness", "caption": "Helligkeit 0..100%"},
+      { "type": "Button", "name": "SetMode1", "label": "... dann [farbig ein]", "onClick":"MILIGHTV6_SetColorHue($id, $ColorHue);MILIGHTV6_SetColorSaturation($id, $ColorSaturation);MILIGHTV6_SetColorBrightness($id, $ColorBrightness);MILIGHTV6_SetMode($id, 1);"},
+      { "type": "NumberSpinner", "name": "WhiteTemperature", "caption": "Temper. 2700-6500K"},
+      { "type": "NumberSpinner", "name": "WhiteBrightness", "caption": "Helligkeit 0..100%"},
+      { "type": "Button", "name": "SetMode2", "label": "... dann [weiß ein]", "onClick":"MILIGHTV6_SetWhiteTemperature($id, $WhiteTemperature);MILIGHTV6_SetWhiteBrightness($id, $WhiteBrightness);MILIGHTV6_SetMode($id, 2);"},
+      { "type": "Button", "name": "SetMode3", "label": "Nachtmodus", "onClick":"MILIGHTV6_SetMode($id, 3);"},
+      { "type": "Button", "name": "SetMode4", "label": "Disco Modus", "onClick":"MILIGHTV6_SetMode($id, 4);"},
+      { "type": "Label", "label": "Innerhalb von 3 Sek nach dem Einschalten der Lampe drücken" },
+      { "type": "Button", "name": "SetMode5", "label": "Link neue Lampe", "onClick":"MILIGHTV6_SetMode($id, 5);"},
+      { "type": "Button", "name": "SetMode6", "label": "Unlink Lampe", "onClick":"MILIGHTV6_SetMode($id, 6);"}
     ],
 
     "status": [
       { "code": 101, "icon": "active", "caption": "Instanz wird erstellt" },
-      { "code": 102, "icon": "active", "caption": "Instanz ok" },
-      { "code": 201, "icon": "error", "caption": "Es wurde noch keine URL eingegeben" },
-      { "code": 202, "icon": "error", "caption": "Es wurde kein Port eingegeben" }
+      { "code": 102, "icon": "active", "caption": "Instanz ok, Gateway (iBox) ist erreichbar" },
+      { "code": 201, "icon": "error", "caption": "Es wurde keine IP eingegeben" },
+      { "code": 202, "icon": "error", "caption": "Es wurde kein Port eingegeben" },
+      { "code": 203, "icon": "error", "caption": "Unbekannter Lampentyp" },
+      { "code": 204, "icon": "error", "caption": "Unbekannte Lampenzone" },
+      { "code": 205, "icon": "error", "caption": "Gateway (iBox) kann nicht angesprochen werden. Bitte IP und Port überprüfen." }
     ]
 }
