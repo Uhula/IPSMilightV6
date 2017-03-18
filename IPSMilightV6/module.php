@@ -395,6 +395,7 @@ class IPSMilightV6 extends IPSModule {
             $cmds[] = $this->getCmd(self::CMD_SET_BRIGHTNESS, $this->GetValueInteger("ColorV"));
             break;
          case SELF::MODE_WHITE : //weiß
+            $cmds[] = $this->getCmd(self::CMD_SWITCH_ON_NIGHT);
             $cmds[] = $this->getCmd(self::CMD_SWITCH_ON_WHITE);
             $cmds[] = $this->getCmd(self::CMD_SET_TEMPERATURE, $this->GetValueInteger("WhiteT"));
             $cmds[] = $this->getCmd(self::CMD_SET_BRIGHTNESS, $this->GetValueInteger("WhiteV"));
