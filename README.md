@@ -70,32 +70,40 @@ Unter "Instanz hinzufügen" ist das 'MilightV6'-Modul unter dem Hersteller 'Mili
 
 __Konfigurationsseite__:
 
-Name          | Beschreibung
-------------- | ---------------------------------
-URL           | URL/IP-Adresse des Milight V6 Controllers
-Port          | Portnummer, Standard 5987
-Typ           | Art der zu steuernden Lampe (RGBWW, BRIDGE, RGBW)
-Zone          | Zone1 .. Zone4, Alle
-Presets       | Vorgaben für Lichtsituationen
+#### IP
+URL/IP-Adresse des Milight V6 Controllers
 
-#### Typ
+#### Port
+Portnummer, Standard 5987
+
+#### Lampentyp
+Art der zu steuernden Lampe (RGBWW, BRIDGE, RGBW).
 Es ist wichtig den korrekten Lampen-Typ anzugeben, da hiervon die zu sendenden
 UDP-Befehle abhängen.
 RGBWW = Neue Lampen mit RGB/Warmweiß/Kaltweiß
 RGBW = Ältere Lampen mit RGB/Warmweiß
 BRIDGE = Lampe im Controller
 
-#### Presets
+#### Lampenzone
+Zone1 .. Zone4, Alle
+
+#### Lichtvorlagen
 Je Instanz können individuelle Vorgaben für Lichtsituationen gegeben werden.
 Hierfür wird dann je Instanz ein eigenes Variablenprofil erzeugt, so dass die
 Vorgaben im WebFront leicht auswählbar sind. Die Vorgaben sind als JSON-Array
 in die Presets-Eigenschaft der Instanzen einzugeben.
-
+Sie Statusvariablen für die möglichen Einträge.
 Formatbeispiel:
+      [{"id":10,"name":"Rot","Mode":1,"ColorH":0,"ColorS":100,"ColorV":100}
+      {"id":11,"name":"Grün","Mode":1,"ColorR":0,"ColorG":255,"ColorB":0}
+      {"id":20,"name":"Warmweiß 25%","Mode":2,"WhiteT":2700,"WhiteV":25}]
 
-      [{"id":10,"name":"Rot","Mode":1,"ColorHue":0,"ColorSaturation":100,"ColorBrightness":100}
-      {"id":11,"name":"Grün","Mode":1,"ColorHue":120,"ColorSaturation":100,"ColorBrightness":100}
-      {"id":20,"name":"Warmweiß 25%","Mode":2,"WhiteTemperature":2700,"WhiteBrightness":25}]
+#### Farbeingabe über
+Art, wie die Farbeingabe vorgenommen werden soll. Entweder üder HSB-Slider, RGB-Slider,
+Farbrad oder alle.
+
+#### Einstellungen als Popup
+Markiert: Die Farb-/Helligkeitseinstellungen werden nicht direkt in der Instanz vorgenommen, sondern es wird eine Kategorie-Instanz erzeugt, welche dann als Popup angezeigt wird. Geht erst ab IPS V4.1.
 
 
 
@@ -106,17 +114,20 @@ Fehlfunktionen führen.
 
 ##### Statusvariablen
 
-ID               | Name            | Typ | Profil                | Beschreibung
----------------- | --------------- | --- | --------------------- | ---------------------------------
-Presets          | Vorgaben        | int | MILIGHTV6.Preset*     | Zur Verfügung stehende Vorgaben
-Mode             | Modus           | int | MILIGHTV6.Mode|Link   | Aus / Farbig / Weiß / Nacht ...
-ColorHue         | Farbwert        | int | MILIGHTV6.Hue         | Enthält den aktuellen Farbwert (Hue, 0..360)
-ColorBrightness  | Farbhelligkeit  | int | MILIGHTV6.Brightness  | Aktuelle Helligkeitseinstellung 0..100%
-ColorSaturation  | Farbsättigung   | int | MILIGHTV6.Saturation  | Aktuelle Sättigungseinstellung bei Farben 0..100%
-Color            | Farbe           | int | ~HexColor             | Enthält die aktuelle Farbe
-WhiteTemperature | Farbtemp.weiß   | int | MILIGHTV6.Temperature | Farbtemperatur für weißes Licht 2700-6500k
-WhiteBrightness  | Farbhell.weiß   | int | MILIGHTV6.Brightness  | Helligkeitseinstellung weißes Licht 0..100%
-DiscoProgram     | Disco-Programm  | int | MILIGHTV6.DiscoProgram| Disco-Programm 0..9
+ID           | Name            | Typ | Profil                | Beschreibung
+------------ | --------------- | --- | --------------------- | ---------------------------------
+Presets      | Vorgaben        | int | MILIGHTV6.Preset*     | Zur Verfügung stehende Vorgaben
+Mode         | Modus           | int | MILIGHTV6.Mode        | Aus / Farbig / Weiß / Nacht ...
+ColorH       | Farbwert        | int | MILIGHTV6.360         | Enthält den aktuellen Farbwert (Hue, 0..360)
+ColorB       | Farbhelligkeit  | int | MILIGHTV6.100         | Aktuelle Helligkeitseinstellung 0..100%
+ColorV       | Farbsättigung   | int | MILIGHTV6.100         | Aktuelle Sättigungseinstellung bei Farben 0..100%
+ColorR       | Rotwert         | int | MILIGHTV6.255         | Aktueller Rotwert 0..255 (0x00..0xFF)
+ColorG       | Grünwert        | int | MILIGHTV6.255         | Aktueller Grünwert 0..255 (0x00..0xFF)
+ColorB       | Blauwert        | int | MILIGHTV6.255         | Aktueller Blauwert 0..255 (0x00..0xFF)
+Color        | Farbe           | int | ~HexColor             | Enthält die aktuelle Farbe
+WhiteT       | Farbtemp.weiß   | int | MILIGHTV6.100         | Farbtemperatur für weißes Licht 2700-6500k
+WhiteV       | Farbhell.weiß   | int | MILIGHTV6.100         | Helligkeitseinstellung weißes Licht 0..100%
+DiscoProgram | Disco-Programm  | int | MILIGHTV6.DiscoProgram| Disco-Programm 0..9
 
 
 ##### Profile:
@@ -126,11 +137,11 @@ Name                     | Typ            | Beschreibung
 MILIGHTV6.Preset*        | int 0..n       | Enthält die Namen der Vorgaben, wird für jede Instanz individuell erzeugt, da jede andere Vorgaben haben kann
 MILIGHTV6.Mode           | int 0..4       | Namen der Modi Aus/Farig/Weiß/Nacht/DiscoProgram
 MILIGHTV6.Link           | int 5..6       | Namen der Modi Link/Unlink (Lampe anlernen/ablernen)
-MILIGHTV6.Hue            | int 0..360°    | Hue-Farbwert im Farbmodell HSV
-MILIGHTV6.Brightness     | int 0..100     | Helligkeitswert
-MILIGHTV6.Saturation     | int 0..100     | Sättigungswert
-MILIGHTV6.Temperature    | int 2700-6500K | Lichttemperatur
-MILIGHTV6.TemperatureSet | int 0..4       | Lichttemperatur, Schnellwahl von 5 Werten
+MILIGHTV6.360            | int 0..360%    | Hue-Farbwert in ° im Farbmodell HSV
+MILIGHTV6.100            | int 0..100%    | Wert 0..100
+MILIGHTV6.255            | int 0..255%    | Wert 0..255
+MILIGHTV6.ColorTemp      | int 2700.6500  | Lichttemperatur in Kelvin
+MILIGHTV6.ColorTempSet   | int 0..4       | Lichttemperatur, Schnellwahl von 5 Werten
 MILIGHTV6.DiscoProgram   | int 0..9       | "None","Color-Fade","White-Fade","RGB-Fade","Color-Flash","Color-Brightness-Flash","Red-Fade-Flash","Green-Fade-Flash","Blue-Fade-Flash","White-Fade-Flash"
 
 
@@ -151,29 +162,39 @@ Liefert bei Erfolg true, sonst false.
 Beispiel:  
 `MILIGHTV6_SetMode( MILIGHTV6::MODE_WHITE ); // weiß ein`
 
-##### boolean MILIGHTV6.SetColorHue( int $value );  
+##### boolean MILIGHTV6.SetColorH( int $value );  
 Setzt den Farbwert. Der Farbwert wird als Hue-Angabe 0..360° nach dem HSV Farbraum erwartet.
 Befindet sich die Instanz im Modus MODE_COLOR, wird die Änderung sofort zu den Lampen
 durchgereicht.
 Liefert bei Erfolg true, sonst false.  
 Beispiel:  
-`MILIGHTV6_SetColorHue( 120 ); // `
+`MILIGHTV6_SetColorH( 120 ); // `
 
-##### boolean MILIGHTV6.SetColorSaturation( int $value );  
+##### boolean MILIGHTV6.SetColorS( int $value );  
 Setzt die Farbsättigung. Die Farbsättigung wird als Prozentwert 0..100% erwartet.
 Befindet sich die Instanz im Modus MODE_COLOR, wird die Änderung sofort zu den Lampen
 durchgereicht.
 Liefert bei Erfolg true, sonst false.  
 Beispiel:  
-`MILIGHTV6_SetColorSaturation( 50 ); // `
+`MILIGHTV6_SetColorS( 50 ); // `
 
-##### boolean MILIGHTV6.SetColorBrightness( int $value );  
+##### boolean MILIGHTV6.SetColorV( int $value );  
 Setzt die Farbhelligkeit. Die Farbhelligkeit wird als Prozentwert 0..100% erwartet.
 Befindet sich die Instanz im Modus MODE_COLOR, wird die Änderung sofort zu den Lampen
 durchgereicht.
 Liefert bei Erfolg true, sonst false.  
 Beispiel:  
-`MILIGHTV6_SetColorBrightness( 50 ); // `
+`MILIGHTV6_SetColorV( 50 ); // `
+
+##### boolean MILIGHTV6.SetColorR( int $value );  
+##### boolean MILIGHTV6.SetColorG( int $value );  
+##### boolean MILIGHTV6.SetColorB( int $value );  
+Setzt die Farbwert für den Rot-/Grün-/Blauanteil (0..255 bzw. 0x00..0xFF).
+Befindet sich die Instanz im Modus MODE_COLOR, wird die Änderung sofort zu den Lampen
+durchgereicht.
+Liefert bei Erfolg true, sonst false.  
+Beispiel:  
+`MILIGHTV6_SetColorR( 0xFF ); // `
 
 ##### boolean MILIGHTV6.SetColor( int $value );  
 Setzt die Farbe. Die Farbe wird als integer-Wert 0xRRGGBB erwartet. Es findet
@@ -184,7 +205,7 @@ Liefert bei Erfolg true, sonst false.
 Beispiel:  
 `MILIGHTV6_SetColor( 0x00FF00 ); // `
 
-##### boolean MILIGHTV6.SetWhiteBrightness( int $value );  
+##### boolean MILIGHTV6.SetWhiteV( int $value );  
 Setzt die Weißhelligkeit. Die Weißhelligkeit wird als Prozentwert 0..100% erwartet.
 Befindet sich die Instanz im Modus MODE_WHITE, wird die Änderung sofort zu den Lampen
 durchgereicht.
@@ -192,7 +213,7 @@ Liefert bei Erfolg true, sonst false.
 Beispiel:  
 `MILIGHTV6_SetWhiteBrightness( 20 ); // `
 
-##### boolean MILIGHTV6.SetWhiteTemperature( int $value );  
+##### boolean MILIGHTV6.SetWhiteT( int $value );  
 Setzt die Lichttemperatur. Die Lichttemperatur wird als Kelvinwert 2700K..6500K erwartet.
 2700K = warmweiß, 6500K = kaltweiß.
 Befindet sich die Instanz im Modus MODE_WHITE, wird die Änderung sofort zu den Lampen

@@ -8,6 +8,15 @@
    Info:  https://github.com/Uhula/IPSMilightV6.git
    (c) 2017 Uhula, use on your own risc
 
+
+H: linear-gradient(to right, rgba(255,0,0,1) 0%,rgba(255,255,0,1) 16%,rgba(1,255,1,1) 33%,rgba(0,255,255,1) 50%,rgba(0,0,255,1) 66%,rgba(255,0,255,1) 84%,rgba(255,0,4,1) 100%)
+S: linear-gradient(to right, rgba(128,128,128,1) 0%,rgba(255,0,0,1) 100%);
+B: linear-gradient(to right, rgba(0,0,0,1) 0%,rgba(255,255,255,1) 100%);
+
+R:
+G:
+B: linear-gradient(to right, rgba(255,255,255,1) 0%,rgba(0,0,255,1) 100%);
+
 */
 
 class IPSMilightV6 extends IPSModule {
@@ -22,13 +31,18 @@ class IPSMilightV6 extends IPSModule {
    const TYPE_BRIDGE = 1;
    const TYPE_RGBWW  = 2;
 
-   const MODE_OFF   = 0;
-   const MODE_COLOR = 1;
-   const MODE_WHITE = 2;
-   const MODE_NIGHT = 3;
-   const MODE_DISCO = 4;
-   const MODE_LINK  = 5;
-   const MODE_UNLINK= 6;
+   const COLORAS_ALL = 0;
+   const COLORAS_HSB = 1;
+   const COLORAS_RGB = 2;
+   const COLORAS_WHEEL = 3;
+
+   const MODE_OFF   = 0x00;
+   const MODE_COLOR = 0x01;
+   const MODE_WHITE = 0x02;
+   const MODE_NIGHT = 0x04;
+   const MODE_DISCO = 0x08;
+   const MODE_LINK  = 0x10;
+   const MODE_UNLINK= 0x20;
 
    // Log-Level Konstante
    const LOG_NONE     = 0x00;
@@ -123,14 +137,15 @@ class IPSMilightV6 extends IPSModule {
       $this->RegisterPropertyInteger("Port", 5987);
       $this->RegisterPropertyInteger("Type", self::TYPE_RGBWW);
       $this->RegisterPropertyInteger("Zone", self::ZONE_ALL);
+      $this->RegisterPropertyBoolean("ConfigAsPopup", false);
+      $this->RegisterPropertyInteger("ColorAs", self::COLORAS_HSB);
+      $this->RegisterPropertyInteger("AllowedModes", self::MODE_COLOR | self::MODE_WHITE );
       $p ='[';
-      $p.='{"id":10, "name":"Rot","Mode":1,"ColorHue":0,"ColorSaturation":100,"ColorBrightness":100}';
-      $p.=',{"id":11, "name":"Grün","Mode":1,"ColorHue":120,"ColorSaturation":100,"ColorBrightness":100}';
-      $p.=',{"id":12, "name":"Blau","Mode":1,"ColorHue":240,"ColorSaturation":100,"ColorBrightness":100}';
-      $p.=',{"id":20, "name":"Warmweiß 25%","Mode":2,"WhiteTemperature":2700,"WhiteBrightness":25}';
-      $p.=',{"id":21, "name":"Warmweiß 50%","Mode":2,"WhiteTemperature":2700,"WhiteBrightness":50}';
-      $p.=',{"id":22, "name":"Kaltweiß 100%","Mode":2,"WhiteTemperature":6500,"WhiteBrightness":100}';
-      $p.=',{"id":31, "name":"Disco","Mode":4,"DiscoProgram":1}';
+      $p.='{"ID":0, "Name":"Rot","Mode":1,"ColorH":0,"ColorS":100,"ColorV":100}';
+      $p.=',{"ID":1, "Name":"Grün 75%","Mode":1,"ColorH":120,"ColorS":100,"ColorV":75}';
+      $p.=',{"ID":2, "Name":"Blau Sätt.50%","Mode":1,"ColorH":240,"ColorS":50,"ColorV":100}';
+      $p.=',{"ID":3, "Name":"Warmweiß 25%","Mode":2,"WhiteT":2700,"WhiteV":25}';
+      $p.=',{"ID":4, "Name":"Kaltweiß 100%","Mode":2,"WhiteT":6500,"WhiteV":100}';
       $p.=']';
       $this->RegisterPropertyString("Presets", $p);
    }
@@ -142,32 +157,52 @@ class IPSMilightV6 extends IPSModule {
 
    /* Änderungen des Optionsdialogs übernehmen */
    public function ApplyChanges() {
-     //Never delete this line!
-     parent::ApplyChanges();
+      //Never delete this line!
+      parent::ApplyChanges();
+      // properties auslesen, werden später benötigt
+      $host = $this->ReadPropertyString("URL");
+      $port = $this->ReadPropertyInteger("Port");
+      $type = $this->ReadPropertyInteger("Type");
+      $zone = $this->ReadPropertyInteger("Zone");
+      $Modes = $this->ReadPropertyInteger("AllowedModes");
+      $ColorAs = $this->ReadPropertyInteger("ColorAs");
+
+
+      if (IPS_GetName($this->InstanceID)=="MiLightV6")
+        IPS_SetName($this->InstanceID, "MiLightV6 ".$this->ReadPropertyInteger("Type").":".$this->ReadPropertyInteger("Zone"));
 
       // Profil-Association für presets anlegen, je Instanz genau ein VProfil
       $ass = [];
       $presets = json_decode($this->ReadPropertyString("Presets"));
-      foreach ($presets as $key => $preset) {
-         $a = array($preset->id, $preset->name, "", -1);
-         $ass[] = $a;
-      }
-      if ($ass!=[])
+      if ($presets and ($presets!=[]))
+         foreach ($presets as $key => $preset) {
+            $a = array($preset->ID, $preset->Name, "", -1);
+            $ass[] = $a;
+         }
+      if (IPS_VariableProfileExists("MilightV6.Preset".$this->InstanceID))
+     	   IPS_DeleteVariableProfile("MilightV6.Preset".$this->InstanceID);
+      if ($ass!=[]) {
          $this->RegisterProfileIntegerAssociation("MilightV6.Preset".$this->InstanceID, "", "", "", $ass, 0);
+      }
 
-      $this->RegisterProfileIntegerAssociation("MilightV6.Mode", "", "", "",
-          [
-           [self::MODE_OFF,"Aus","",-1],
-           [self::MODE_COLOR,"Farbig","",-1],
-           [self::MODE_WHITE,"Weiß","",-1],
-           [self::MODE_NIGHT,"Nacht","",-1],
-           [self::MODE_DISCO,"Disco","",-1]
-        ], 0);
-      $this->RegisterProfileInteger("MilightV6.Hue", "", "", "°", 0, 360, 18);
-      $this->RegisterProfileInteger("MilightV6.Saturation", "", "", "%", 0, 100, 1);
-      $this->RegisterProfileInteger("MilightV6.Brightness", "", "", "%", 0, 100, 1);
-      $this->RegisterProfileInteger("MilightV6.Temperature", "", "", "K", 2700, 6500, 200);
-      $this->RegisterProfileIntegerAssociation("MilightV6.TemperatureSet", "", "", "",
+      // Modes
+      $ass = [];
+      $ass[] = array(self::MODE_OFF,"Aus","",-1);
+      if ($Modes & self::MODE_COLOR) $ass[] = array(self::MODE_COLOR,"Farbig","",-1);
+      if ($Modes & self::MODE_WHITE) $ass[] = array(self::MODE_WHITE,"Weiß","",-1);
+      if ($Modes & self::MODE_NIGHT) $ass[] = array(self::MODE_NIGHT,"Nacht","",-1);
+      if ($Modes & self::MODE_DISCO) $ass[] = array(self::MODE_DISCO,"Disco","",-1);
+      if ($Modes & self::MODE_LINK) $ass[] = array(self::MODE_LINK,"Anlernen","",-1);
+      if ($Modes & self::MODE_UNLINK) $ass[] = array(self::MODE_UNLINK,"Ablernen","",-1);
+      if (IPS_VariableProfileExists("MilightV6.Mode".$this->InstanceID))
+     	   IPS_DeleteVariableProfile("MilightV6.Mode".$this->InstanceID);
+      $this->RegisterProfileIntegerAssociation("MilightV6.Mode".$this->InstanceID, "", "", "", $ass, 0);
+
+      $this->RegisterProfileInteger("MilightV6.360", "", "", "%", 0, 360, 1);
+      $this->RegisterProfileInteger("MilightV6.100", "", "", "%", 0, 100, 1);
+      $this->RegisterProfileInteger("MilightV6.255", "", "", "%", 0, 255, 1);
+      $this->RegisterProfileInteger("MilightV6.ColorTemp", "", "", "%", 2700, 6500, 1);
+      $this->RegisterProfileIntegerAssociation("MilightV6.ColorTempSet", "", "", "",
           [
            [2700,"Warmweiß","",-1],
            [4000,"Neutralweiß","",-1],
@@ -177,7 +212,7 @@ class IPSMilightV6 extends IPSModule {
         ], 0);
       $this->RegisterProfileIntegerAssociation("MilightV6.DiscoProgram", "", "", "",
           [
-           [0,"None","",-1],
+           [0,"Ohne","",-1],
            [1,"Color-Fade","",-1],
            [2,"White-Fade","",-1],
            [3,"RGB-Fade","",-1],
@@ -193,51 +228,100 @@ class IPSMilightV6 extends IPSModule {
            [0,"Langsamer","",-1],
            [1,"Schneller","",-1],
         ], 0);
-      $this->RegisterProfileIntegerAssociation("MilightV6.Link", "", "", "",
-          [
-           [self::MODE_LINK,"Lampe anlernen","",-1],
-           [self::MODE_UNLINK,"Lampe ablernen","",-1],
-        ], 0);
 
-      //Variablen erstellen
-      $this->RegisterVariableInteger("Preset", "Vorgaben","MilightV6.Preset".$this->InstanceID,10);
-      $this->RegisterVariableInteger("Mode", "Modus", "MilightV6.Mode",20);
-      $this->RegisterVariableInteger("ColorHue", "Farbwert", "MilightV6.Hue",30);
-      $this->RegisterVariableInteger("ColorSaturation", "Farbsättigung", "MilightV6.Saturation",31);
-      $this->RegisterVariableInteger("ColorBrightness", "Farbhelligkeit","MilightV6.Brightness",32);
-      $this->RegisterVariableInteger("Color", "Farbe", "~HexColor", 33);
-      $this->RegisterVariableInteger("WhiteTemperature", "Farbtemperatur (weiß)", "MilightV6.Temperature",40);
-      $this->RegisterVariableInteger("WhiteBrightness", "Helligkeit (weiß)","MilightV6.Brightness",41);
-      $this->RegisterVariableInteger("DiscoProgram","Disco-Programm","MilightV6.DiscoProgram",50);
-      $this->RegisterVariableInteger("DiscoSpeed","Disco-Geschwindigkeit","MilightV6.DiscoSpeed",51);
-
-      $this->EnableAction("Mode");
-      $this->EnableAction("ColorHue");
-      $this->EnableAction("ColorSaturation");
-      $this->EnableAction("ColorBrightness");
-      $this->EnableAction("Color");
-      $this->EnableAction("WhiteBrightness");
-      $this->EnableAction("WhiteTemperature");
-      $this->EnableAction("Preset");
-      $this->EnableAction("DiscoProgram");
-      $this->EnableAction("DiscoSpeed");
+      //Variablen deklarieren, werden für die Instanziierung und evtl die Links im Popup benötigt
+      $RegVars = [];
+      $RegVars[] = ["Type" => "int", "Name" => "Mode", "Bez" => "Zustand", "Profil" => "MilightV6.Mode".$this->InstanceID, "Link"=>true, "Action"=>true, "ID" => 0];
+      $RegVars[] = ["Type" => "int", "Name" => "PresetID", "Bez" => "Lichtvorlage", "Profil" => "MilightV6.Preset".$this->InstanceID, "Link"=>false, "Action"=>true, "ID" => 0];
+      $RegVars[] = ["Type" => "group", "Bez" => "Farb-Einstellungen", "Link"=>true];
+      $RegVars[] = ["Type" => "int", "Name" => "ColorH", "Bez" => "Farbwert", "Profil" => "MilightV6.360", "Link"=>($ColorAs==self::COLORAS_ALL) or ($ColorAs==self::COLORAS_HSB), "ID" => 0, "Action"=>true, "Icon" => "slider.type=hue;slider.text=hide"];
+      $RegVars[] = ["Type" => "int", "Name" => "ColorS", "Bez" => "Farbsättigung", "Profil" => "MilightV6.100", "Link"=>(($ColorAs==self::COLORAS_ALL) or ($ColorAs==self::COLORAS_HSB)) and ($type==self::TYPE_RGBWW), "ID" => 0, "Action"=>true, "Icon" => "slider.type=saturation;slider.text=hide"];
+      $RegVars[] = ["Type" => "int", "Name" => "ColorV", "Bez" => "Farbhelligkeit", "Profil" => "MilightV6.100", "Link"=>($ColorAs==self::COLORAS_ALL) or ($ColorAs==self::COLORAS_HSB), "ID" => 0, "Action"=>true, "Icon" => "slider.type=brightness;slider.text=hide"];
+      $RegVars[] = ["Type" => "int", "Name" => "ColorR", "Bez" => "Rotwert", "Profil" => "MilightV6.255", "Link"=>($ColorAs==self::COLORAS_ALL) or ($ColorAs==self::COLORAS_RGB), "ID" => 0, "Action"=>true, "Icon" => "slider.type=red;slider.text=hide"];
+      $RegVars[] = ["Type" => "int", "Name" => "ColorG", "Bez" => "Grünwert", "Profil" => "MilightV6.255", "Link"=>($ColorAs==self::COLORAS_ALL) or ($ColorAs==self::COLORAS_RGB), "ID" => 0, "Action"=>true, "Icon" => "slider.type=green;slider.text=hide"];
+      $RegVars[] = ["Type" => "int", "Name" => "ColorB", "Bez" => "Blauwert", "Profil" => "MilightV6.255", "Link"=>($ColorAs==self::COLORAS_ALL) or ($ColorAs==self::COLORAS_RGB), "ID" => 0, "Action"=>true, "Icon" => "slider.type=blue;slider.text=hide"];
+      $RegVars[] = ["Type" => "int", "Name" => "Color", "Bez" => "Farbe", "Profil" => "~HexColor", "Link"=>($ColorAs==self::COLORAS_ALL) or ($ColorAs==self::COLORAS_WHEEL), "Action"=>true, "ID" => 0];
+      $RegVars[] = ["Type" => "group", "Bez" => "Weiß-Einstellungen", "Link"=>true];
+      $RegVars[] = ["Type" => "int", "Name" => "WhiteT", "Bez" => "Farbtemperatur (weiß)", "Profil" => "MilightV6.ColorTemp", "Link"=>($type==self::TYPE_RGBWW), "ID" => 0, "Action"=>true, "Icon" => "slider.type=colortemp;slider.text=hide"];
+      $RegVars[] = ["Type" => "int", "Name" => "WhiteV", "Bez" => "Helligkeit (weiß)", "Profil" => "MilightV6.100", "Link"=>true, "ID" => 0, "Action"=>true, "Icon" => "slider.type=brightness;slider.text=hide"];
+      $RegVars[] = ["Type" => "group", "Bez" => "Disco-Einstellungen", "Link"=>true];
+      $RegVars[] = ["Type" => "int", "Name" => "DiscoProgram", "Bez" => "Disco-Programm", "Profil" => "MilightV6.DiscoProgram", "Link"=>true, "Action"=>true, "ID" => 0];
+      $RegVars[] = ["Type" => "int", "Name" => "DiscoSpeed", "Bez" => "Disco-Geschwindigkeit", "Profil" => "MilightV6.DiscoSpeed", "Link"=>true, "ID" => 0, "Action"=>true, "Icon" => "ele.style=btn"];
+      foreach ($RegVars as $key => $v) {
+         switch ($v["Type"]) {
+            case "int" :
+               $RegVars[$key]["ID"] = $this->RegisterVariableInteger($v["Name"], $v["Bez"],$v["Profil"],$key);
+               break;
+            case "string" :
+               $RegVars[$key]["ID"] = $this->RegisterVariableString($v["Name"], $v["Bez"],$v["Profil"],$key);
+               break;
+            case "group" :
+               break;
+         }
+         if (array_key_exists("ID",$RegVars[$key])) {
+            if ($v["Action"]) $this->EnableAction($v["Name"]);
+            if (array_key_exists ("Icon", $v))
+               IPS_SetIcon ($RegVars[$key]["ID"], $v["Icon"] );
+         }
+      }
 
       // Vorbelegung der Variablen
       $this->SetValueInteger("Mode", 0 );
-      $this->SetValueInteger("ColorHue", 0xFF );
-      $this->SetValueInteger("ColorSaturation", 50 );
-      $this->SetValueInteger("ColorBrightness", 100 );
-      $this->SetValueInteger("WhiteBrightness", 100 );
-      $this->SetValueInteger("WhiteTemperature", 2700 );
-      $this->SetValueInteger("Preset", 10 );
+      $this->SetValueInteger("ColorH", 0xFF );
+      $this->SetValueInteger("ColorS", 50 );
+      $this->SetValueInteger("ColorV", 100 );
+      $this->SetValueInteger("WhiteV", 100 );
+      $this->SetValueInteger("WhiteT", 2700 );
+      $this->UpdateColor();
 
-      // Übernahme und Test der Werte
-      $host = $this->ReadPropertyString("URL");
-      $port = $this->ReadPropertyInteger("Port");
-      $type = $this->ReadPropertyInteger("Type");
-      $zone = $this->ReadPropertyInteger("Zone");
+      // wenn Einstellungen via Popup, dann Child-Instanzen erzeugen (vorher entfernen)
+      $CatID = @IPS_GetCategoryIDByName("Lampeneinstellungen", $this->InstanceID);
+      if ( $CatID )
+         $this->DeleteCategory( $CatID );
+      $ScriptID = @IPS_GetScriptIDByName("Lampeneinstellungen", $this->InstanceID);
+      if ($ScriptID)
+         IPS_DeleteScript ( $ScriptID, true );
 
-      $status = 102;
+      if ( ($CatID === false) and $this->ReadPropertyBoolean("ConfigAsPopup") ) {
+         $CatID = IPS_CreateCategory();
+         IPS_SetName($CatID, "Lampeneinstellungen");
+         IPS_SetParent($CatID, $this->InstanceID);
+
+        $GroupID = false;
+         foreach ($RegVars as $key => $v) {
+            if ($v["Link"]) {
+               switch ($v["Type"]) {
+                  case "group" :
+                     // Dummy-Modul für die Gruppierung erzeugen
+                     $GroupID = IPS_CreateInstance("{485D0419-BE97-4548-AA9C-C083EB82E61E}");
+                     IPS_SetName($GroupID,  $v["Bez"]);
+                     IPS_SetParent($GroupID, $CatID);
+                     IPS_SetPosition ($GroupID, $key );
+                     break;
+                  default:
+                     // Link erzeugen und in das Popup bzw die Gruppe setzen
+                     $LinkID = IPS_CreateLink();
+                     IPS_SetName($LinkID, $v["Bez"]);
+                     if ($GroupID) IPS_SetParent($LinkID, $GroupID);
+                     else IPS_SetParent($LinkID, $CatID);
+                     IPS_SetLinkTargetID($LinkID, $v["ID"]);
+                     IPS_SetPosition ($LinkID, $key );
+                     break;
+               }
+            }
+         }
+
+         // Script zum Anzeigen der Konfiguration als Popup, geht erst ab IPS 4.1
+         $ScriptID = IPS_CreateScript(0);
+         IPS_SetParent($ScriptID, $this->InstanceID);
+         IPS_SetName($ScriptID, "Lampeneinstellungen");
+         IPS_SetScriptContent($ScriptID, '<? if ($_IPS["SENDER"]=="WebFront") WFC_OpenCategory($_IPS["CONFIGURATOR"], '.$CatID.');  ?>');
+         IPS_SetIcon ($ScriptID, "icon=none" );
+         IPS_SetPosition ($ScriptID, 9999 );
+   }
+
+
+      $status = 102; // ok
       if ( $host == "" ) $status = 201;
       if ( $port == 0 ) $status = 202;
       if ( ( $zone < self::ZONE_ALL )  or ( $zone > self::ZONE_4 ) ) $status = 203;
@@ -256,51 +340,48 @@ class IPSMilightV6 extends IPSModule {
       }
 
       $this->SetStatus( $status );
-      return true;
+      $this->UpdateVisibility();
+
+      return ($status==102);
    }
 
-   /*
-private function SetVisibility(integer $State)
-	{
-		switch ($State) {
-		case 0: // aus
-			$this->SetHidden('Color', true);
-			$this->SetHidden('Brightness', true);
-			break;
-		case 1: // weiß
-			$this->SetHidden('Color', true);
-			$this->SetHidden('Brightness', false);
-			break;
-		case 2: // Farbe
-			$this->SetHidden('Color', false);
-			$this->SetHidden('Brightness', true);
-			break;
-		}
-		$this->SetValueInteger('STATE', $State);
-	}
+   private function UpdateVisibility() {
+      $hide = $this->ReadPropertyBoolean("ConfigAsPopup");
+      $mode = $this->GetValueInteger("Mode");
+      $type = $this->ReadPropertyInteger("Type");
+      $ColorAs = $this->ReadPropertyInteger("ColorAs");
 
-   */
+
+      $this->SetHidden("ColorH",$hide or ($mode!=SELF::MODE_COLOR) or ( ($ColorAs!=self::COLORAS_ALL) and ($ColorAs!=self::COLORAS_HSB) ) );
+      $this->SetHidden("ColorS",$hide or ($mode!=SELF::MODE_COLOR) or ($type!=self::TYPE_RGBWW) or ( ($ColorAs!=self::COLORAS_ALL) and ($ColorAs != self::COLORAS_HSB) ) );
+      $this->SetHidden("ColorV",$hide or ($mode!=SELF::MODE_COLOR) or ( ($ColorAs!= self::COLORAS_ALL) and ($ColorAs!=self::COLORAS_HSB) ) );
+
+      $this->SetHidden("ColorR",$hide or ($mode!=SELF::MODE_COLOR) or ( ($ColorAs!=self::COLORAS_ALL) and ($ColorAs!=self::COLORAS_RGB) ) );
+      $this->SetHidden("ColorG",$hide or ($mode!=SELF::MODE_COLOR) or ( ($ColorAs!=self::COLORAS_ALL) and ($ColorAs!=self::COLORAS_RGB) ) );
+      $this->SetHidden("ColorB",$hide or ($mode!=SELF::MODE_COLOR) or ( ($ColorAs!=self::COLORAS_ALL) and ($ColorAs!=self::COLORAS_RGB) ) );
+
+      $this->SetHidden("Color",$hide or ($mode!=SELF::MODE_COLOR) or ( ($ColorAs!=self::COLORAS_ALL) and ($ColorAs!=self::COLORAS_WHEEL) ) );
+
+      $this->SetHidden("WhiteT",$hide or ($mode!=SELF::MODE_WHITE) or ($type!=self::TYPE_RGBWW) );
+      $this->SetHidden("WhiteV",$hide or ($mode!=SELF::MODE_WHITE));
+
+      $this->SetHidden("DiscoProgram",$hide or ($mode!=SELF::MODE_DISCO));
+      $this->SetHidden("DiscoSpeed",$hide or ($mode!=SELF::MODE_DISCO));
+
+      $this->SetHidden("PresetID",$this->ReadPropertyString("Presets")=="");
+}
+
 
 /* Update
    ---------------------------------------------------------
    Führt die gewünschte Aktion aus */
    private function Update() {
-      $cmds=[];
 
-      // setzen der Sichtbarkeit
+      $this->UpdateVisibility();
+
+      $cmds=[];
       $mode = $this->GetValueInteger("Mode");
       $type = $this->ReadPropertyInteger("Type");
-      $this->SetHidden("ColorHue",$mode!=SELF::MODE_COLOR);
-      $this->SetHidden("ColorSaturation",($mode!=SELF::MODE_COLOR) or ($type!=self::TYPE_RGBWW) );
-      $this->SetHidden("ColorBrightness",$mode!=SELF::MODE_COLOR);
-      $this->SetHidden("Color",$mode!=SELF::MODE_COLOR);
-
-      $this->SetHidden("WhiteTemperature",($mode!=SELF::MODE_WHITE) or ($type!=self::TYPE_RGBWW) );
-      $this->SetHidden("WhiteBrightness",$mode!=SELF::MODE_WHITE);
-
-      $this->SetHidden("DiscoProgram",$mode!=SELF::MODE_DISCO);
-      $this->SetHidden("DiscoSpeed",$mode!=SELF::MODE_DISCO);
-
       // Anwenden der Änderungen
       $cmds = [];
       switch ($mode) {
@@ -309,14 +390,14 @@ private function SetVisibility(integer $State)
             break;
          case SELF::MODE_COLOR : //farbig
             $cmds[] = $this->getCmd( self::CMD_SWITCH_ON );
-            $cmds[] = $this->getCmd(self::CMD_SET_COLOR, $this->GetValueInteger("ColorHue"));
-            $cmds[] = $this->getCmd(self::CMD_SET_SATURATION, $this->GetValueInteger("ColorSaturation"));
-            $cmds[] = $this->getCmd(self::CMD_SET_BRIGHTNESS, $this->GetValueInteger("ColorBrightness"));
+            $cmds[] = $this->getCmd(self::CMD_SET_COLOR, $this->GetValueInteger("ColorH"));
+            $cmds[] = $this->getCmd(self::CMD_SET_SATURATION, $this->GetValueInteger("ColorS"));
+            $cmds[] = $this->getCmd(self::CMD_SET_BRIGHTNESS, $this->GetValueInteger("ColorV"));
             break;
          case SELF::MODE_WHITE : //weiß
             $cmds[] = $this->getCmd(self::CMD_SWITCH_ON_WHITE);
-            $cmds[] = $this->getCmd(self::CMD_SET_TEMPERATURE, $this->GetValueInteger("WhiteTemperature"));
-            $cmds[] = $this->getCmd(self::CMD_SET_BRIGHTNESS, $this->GetValueInteger("WhiteBrightness"));
+            $cmds[] = $this->getCmd(self::CMD_SET_TEMPERATURE, $this->GetValueInteger("WhiteT"));
+            $cmds[] = $this->getCmd(self::CMD_SET_BRIGHTNESS, $this->GetValueInteger("WhiteV"));
             break;
          case SELF::MODE_NIGHT : //Nacht
             $cmds[] = $this->getCmd(self::CMD_SWITCH_ON_NIGHT);
@@ -325,23 +406,42 @@ private function SetVisibility(integer $State)
             $cmds[] = $this->getCmd(self::CMD_SET_DISCO_PROGRAM, $this->GetValueInteger("DiscoProgram"));
             break;
          case SELF::MODE_LINK :
+            // Lampen sind nur 3 Sek im Lernmodus, also hier 10 Sek lang den Befehl sendende
             $cmds[] = $this->getCmd(self::CMD_SET_LINK_MODE);
+            for ($i=0; $i<10; $i++) {
+//               if ($i % 2 == 0)
+//                  WFC_SendNotification ( 47626 /*[WebFront]*/, "Lampe anlernen", "Lampe einschalten\n Noch ".(10-$i)." Sekunden", "", 10-$i );
+               $this->sendCmds( $cmds );
+               IPS_Sleep( 1000 );
+            }
             break;
          case SELF::MODE_UNLINK :
+            // Lampen sind nur 3 Sek im Lernmodus, also hier 10 Sek lang den Befehl sendende
             $cmds[] = $this->getCmd(self::CMD_SET_UNLINK_MODE);
+            for ($i=0; $i<10; $i++) {
+               $this->sendCmds( $cmds );
+               IPS_Sleep( 1000 );
+            }
             break;
+         //case SELF::MODE_OPTIONS :
+            //IPS_RunScript ( IPS_GetScriptIDByName  ( "Lampeneinstellungen", $this->InstanceID ) );
+            //IPS_RunScriptTextEx('echo $_IPS["Anfang"] . " ".  $_IPS["Ende"];', Array("Anfang" => "Hallo", "Ende" => "Welt"));
+            //break;
 
       }
-
-      return $this->sendCmds( $cmds );
+      if ($cmds!=[])
+         return $this->sendCmds( $cmds );
    }
 
    // Color aus HSB berechnen
    private function UpdateColor() {
-      $rgb = $this->HSL2RGB( $this->GetValueInteger("ColorHue"),
-                             $this->GetValueInteger("ColorSaturation"),
-                             $this->GetValueInteger("ColorBrightness") );
+      $rgb = $this->HSL2RGB( $this->GetValueInteger("ColorH"),
+                             $this->GetValueInteger("ColorS"),
+                             $this->GetValueInteger("ColorV") );
       $this->SetValueInteger("Color", ($rgb[0] << 16) + ($rgb[1] << 8) + $rgb[2] );
+      $this->SetValueInteger("ColorR", $rgb[0] );
+      $this->SetValueInteger("ColorG", $rgb[1] );
+      $this->SetValueInteger("ColorB", $rgb[2] );
    }
 
    public function SetMode(int $mode) {
@@ -349,76 +449,104 @@ private function SetVisibility(integer $State)
      return $this->Update();
    }
 
-   public function SetColorHue(int $hue) {
+   public function SetColorH(int $hue) {
      $hue = min(360,max(0,$hue));
-     $this->SetValueInteger("ColorHue", $hue );
+     $this->SetValueInteger("ColorH", $hue );
      $this->UpdateColor();
      if ($this->GetValueInteger("Mode")==self::MODE_COLOR)
         return $this->Update();
      else return true;
    }
 
-   public function SetColorSaturation(int $saturation) {
+   public function SetColorS(int $saturation) {
      $saturation = min(100,max(0,$saturation));
-     $this->SetValueInteger("ColorSaturation", $saturation );
+     $this->SetValueInteger("ColorS", $saturation );
      $this->UpdateColor();
      if ($this->GetValueInteger("Mode")==self::MODE_COLOR)
         return $this->Update();
      else return true;
    }
 
-   public function SetColorBrightness(int $brightness) {
+   public function SetColorV(int $brightness) {
      $brightness = min(100,max(0,$brightness));
-     $this->SetValueInteger("ColorBrightness", $brightness );
+     $this->SetValueInteger("ColorV", $brightness );
      $this->UpdateColor();
      if ($this->GetValueInteger("Mode")==self::MODE_COLOR)
         return $this->Update();
      else return true;
+   }
+
+   private function SetHSVByRGB( $r, $b, $g ) {
+     $hsv = $this->RGB2HSV( $r, $b, $g );
+     $this->SetValueInteger("ColorH", floor( $hsv[0] ) );
+     $this->SetValueInteger("ColorS", floor( $hsv[1] ) );
+     $this->SetValueInteger("ColorV", floor( $hsv[2] ) );
+     $this->UpdateColor();
+     if ($this->GetValueInteger("Mode")==self::MODE_COLOR)
+        return $this->Update();
+     else return true;
+   }
+
+   public function SetColorR(int $value ) {
+     $value = min(255,max(0,$value));
+     $color = $this->GetValueInteger("Color");
+     return $this->SetHSVByRGB( $value, ($color & 0xFF00) >> 8, $color & 0xFF );
+   }
+
+   public function SetColorG(int $value ) {
+     $value = min(255,max(0,$value));
+     $color = $this->GetValueInteger("Color");
+     return $this->SetHSVByRGB( $color >> 16, $value, $color & 0xFF );
+   }
+
+   public function SetColorB(int $value ) {
+     $value = min(255,max(0,$value));
+     $color = $this->GetValueInteger("Color");
+     return $this->SetHSVByRGB( $color >> 16, ($color & 0xFF00) >> 8, $value );
    }
 
    public function SetColor(int $color) {
-     $hsl = $this->RGB2HSV( $color >> 16, ($color & 0xFF00) >> 8, $color & 0xFF );
-     $this->SetValueInteger("ColorHue", floor( $hsl[0] ) );
-     $this->SetValueInteger("ColorSaturation", floor( $hsl[1] ) );
-     $this->SetValueInteger("ColorBrightness", floor( $hsl[2] ) );
-     $this->UpdateColor();
-     if ($this->GetValueInteger("Mode")==self::MODE_COLOR)
-        return $this->Update();
+     return $this->SetHSVByRGB( $color >> 16, ($color & 0xFF00) >> 8, $color & 0xFF );
    }
 
-   public function SetWhiteBrightness(int $brightness) {
-     $brightness = min(100,max(0,$brightness));
-     $this->SetValueInteger("WhiteBrightness", $brightness );
+   public function SetWhiteV(int $value) {
+     $value = min(100,max(0,$value));
+     $this->SetValueInteger("WhiteV", $value );
      if ($this->GetValueInteger("Mode")==self::MODE_WHITE)
         return $this->Update();
      else return true;
    }
 
-   public function SetWhiteTemperature(int $temperatur) {
-	  $temperatur = min( 6500, max( 2700, $temperatur) );
-     $this->SetValueInteger("WhiteTemperature", $temperatur );
+   public function SetWhiteT(int $value) {
+	  $value = min( 6500, max( 2700, $value) );
+     $this->SetValueInteger("WhiteT", $value );
      if ($this->GetValueInteger("Mode")==self::MODE_WHITE)
         return $this->Update();
      else return true;
    }
 
-   public function SetPreset(int $presetid) {
-     $this->SetValueInteger("Preset", $presetid );
+   public function SetPresetID(int $presetid) {
+     $this->SetValueInteger("PresetID", $presetid );
      $presets = json_decode($this->ReadPropertyString("Presets"));
      foreach ($presets as $key => $preset) {
-        if (isset($preset->id) and ($preset->id == $presetid)) {
+        if (isset($preset->ID) and ($preset->ID == $presetid)) {
            if (isset($preset->Mode)) $this->SetValueInteger("Mode", $preset->Mode );
-           if (isset($preset->ColorHue)) $this->SetValueInteger("ColorHue", $preset->ColorHue );
-           if (isset($preset->ColorSaturation)) $this->SetValueInteger("ColorSaturation", $preset->ColorSaturation );
-           if (isset($preset->ColorBrightness)) $this->SetValueInteger("ColorBrightness", $preset->ColorBrightness );
-           if (isset($preset->WhiteTemperature)) $this->SetValueInteger("WhiteTemperature", $preset->WhiteTemperature );
-           if (isset($preset->WhiteBrightness)) $this->SetValueInteger("WhiteBrightness", $preset->WhiteBrightness );
+           if (isset($preset->ColorH)) $this->SetValueInteger("ColorH", $preset->ColorH );
+           if (isset($preset->ColorS)) $this->SetValueInteger("ColorS", $preset->ColorS );
+           if (isset($preset->ColorV)) $this->SetValueInteger("ColorV", $preset->ColorV );
+           if (isset($preset->ColorR)) $this->SetValueInteger("ColorR", $preset->ColorR );
+           if (isset($preset->ColorG)) $this->SetValueInteger("ColorG", $preset->ColorG );
+           if (isset($preset->ColorB)) $this->SetValueInteger("ColorB", $preset->ColorB );
+           if (isset($preset->Color)) $this->SetValueInteger("Color", $preset->Color );
+           if (isset($preset->WhiteT)) $this->SetValueInteger("WhiteT", $preset->WhiteT );
+           if (isset($preset->WhiteV)) $this->SetValueInteger("WhiteV", $preset->WhiteV );
            if (isset($preset->DiscoProgram)) $this->SetValueInteger("DiscoProgram", $preset->DiscoProgram );
         }
       }
      $this->UpdateColor();
      return $this->Update();
    }
+
 
    public function SetDiscoProgram(int $DiscoProgram) {
      $this->SetValueInteger("DiscoProgram", $DiscoProgram );
@@ -439,38 +567,20 @@ private function SetVisibility(integer $State)
    }
 
    public function RequestAction($Ident, $Value) {
-     $this->Log($Value);
      switch($Ident) {
-       case "Mode":
-          $this->SetMode( $Value );
-          break;
-       case "ColorHue":
-         $this->SetColorHue( $Value );
-         break;
-       case "ColorSaturation":
-         $this->SetColorSaturation( $Value );
-         break;
-       case "ColorBrightness":
-         $this->SetColorBrightness( $Value );
-         break;
-       case "Color":
-         $this->SetColor( $Value );
-         break;
-       case "WhiteBrightness":
-         $this->SetWhiteBrightness( $Value );
-         break;
-       case "WhiteTemperature":
-         $this->SetWhiteTemperature( $Value );
-         break;
-       case "Preset":
-         $this->SetPreset( $Value );
-         break;
-       case "DiscoProgram":
-         $this->SetDiscoProgram( $Value );
-         break;
-       case "DiscoSpeed":
-         $this->SetDiscoSpeed( $Value );
-         break;
+       case "Mode": $this->SetMode( $Value ); break;
+       case "ColorH": $this->SetColorH( $Value ); break;
+       case "ColorS": $this->SetColorS( $Value ); break;
+       case "ColorV": $this->SetColorV( $Value ); break;
+       case "ColorR": $this->SetColorR( $Value ); break;
+       case "ColorG": $this->SetColorG( $Value ); break;
+       case "ColorB": $this->SetColorB( $Value ); break;
+       case "Color":  $this->SetColor( $Value ); break;
+       case "WhiteV": $this->SetWhiteV( $Value ); break;
+       case "WhiteT": $this->SetWhiteT( $Value ); break;
+       case "PresetID": $this->SetPresetID( $Value ); break;
+       case "DiscoProgram": $this->SetDiscoProgram( $Value ); break;
+       case "DiscoSpeed": $this->SetDiscoSpeed( $Value ); break;
 
        default:
          throw new Exception("Invalid ident");
@@ -480,41 +590,76 @@ private function SetVisibility(integer $State)
 /* ================================================================
    IPS Helper, Setter, Getter
    ================================================================*/
+   // Löschen einer Kategory inklusve Inhalt
+   private function DeleteCategory($CategoryId) {
+      $this->EmptyCategory($CategoryId);
+      IPS_DeleteCategory($CategoryId);
+    }
+
+   // Löschen eines beliebigen Objektes
+   private function DeleteObject($ObjectId) {
+      $Object     = IPS_GetObject($ObjectId);
+      $ObjectType = $Object['ObjectType'];
+      switch ($ObjectType) {
+         case 0: DeleteCategory($ObjectId); break;
+         case 1: $this->EmptyCategory($ObjectId);  IPS_DeleteInstance($ObjectId); break;
+         case 2: IPS_DeleteVariable($ObjectId); break;
+         case 3: IPS_DeleteScript($ObjectId, false);  break;
+         case 4: IPS_DeleteEvent($ObjectId);  break;
+         case 5: IPS_DeleteMedia($ObjectId, true); break;
+         case 6: IPS_DeleteLink($ObjectId);  break;
+      }
+   }
+
+
+   // Löschen des Inhalts einer Kategorie inklusve Inhalt
+   private function EmptyCategory($CategoryId) {
+      if ($CategoryId==0) return false;
+      $ChildrenIds = IPS_GetChildrenIDs($CategoryId);
+      foreach ($ChildrenIds as $ObjectId)
+         $this->DeleteObject($ObjectId);
+   }
+
    protected function SetHidden($Ident, $value) {
-		$id = $this->GetIDForIdent($Ident); IPS_SetHidden($id, $value);
+		$id = $this->GetIDForIdent($Ident);
+      if ($id) IPS_SetHidden($id, $value);
 	}
 
    private function SetValueInteger($Ident, $value) {
      $id = $this->GetIDForIdent($Ident);
-     if (GetValueInteger($id) <> $value) { SetValueInteger($id, $value); return true; }
+     if ( $id and (GetValueInteger($id) <> $value)) { SetValueInteger($id, $value); return true; }
      return false;
    }
    private function GetValueInteger($Ident) {
-     $id = $this->GetIDForIdent($Ident); return GetValueInteger($id);
+     $id = $this->GetIDForIdent($Ident);
+     if ($id) return GetValueInteger($id);
    }
 
    private function SetValueBoolean($Ident, $value) {
      $id = $this->GetIDForIdent($Ident);
-     if (GetValueBoolean($id) <> $value) { SetValueBoolean($id, boolval($value));  return true; }
+     if ( $id and (GetValueBoolean($id) <> $value) ) { SetValueBoolean($id, boolval($value));  return true; }
      return false;
    }
    private function GetValueBoolean($Ident) {
-     $id = $this->GetIDForIdent($Ident); return GetValueBoolean($id);
+     $id = $this->GetIDForIdent($Ident);
+     if ($id) return GetValueBoolean($id);
    }
 
    private function SetValueFloat($Ident, $value) {
      $id = $this->GetIDForIdent($Ident);
-     if (GetValueFloat($id) <> $value) { SetValueFloat($id, $value); return true; }
+     if ( $id and (GetValueFloat($id) <> $value) ) { SetValueFloat($id, $value); return true; }
      return false;
+   }
+
+   private function GetValueString($Ident) {
+     $id = $this->GetIDForIdent($Ident);
+     if ($id) return GetValueString($id);
    }
 
    private function SetValueString($Ident, $value) {
      $id = $this->GetIDForIdent($Ident);
-     if (GetValueString($id) <> $value) { SetValueString($id, $value); return true; }
+     if ( $id and (GetValueString($id) <> $value) ) { SetValueString($id, $value); return true; }
      return false;
-   }
-   private function GetValueString($Ident) {
-     $id = $this->GetIDForIdent($Ident); return GetValueString($id);
    }
 
    protected function RegisterProfileInteger($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, $StepSize) {
@@ -637,7 +782,7 @@ private function SetVisibility(integer $State)
       $receiveRetry = 1;
       while ($receiveRetry <= $this->receiveRetries) {
          //$this->Log("Empfangsversuch: $receiveRetry / $this->receiveRetries");
-         $receiveBytes = socket_recv($socket, $buf, 128, 0); // MSG_DONTWAIT = 0x40
+         $receiveBytes = @socket_recv($socket, $buf, 128, 0); // MSG_DONTWAIT = 0x40
          if ($receiveBytes > 0 ) {
             $res = $buf;
             break;
@@ -658,7 +803,7 @@ private function SetVisibility(integer $State)
 
       while ( ($sendRetry <= $this->sendRetries) and ($sentBytes==0) ) {
          //$this->Log("Sendeversuch: .$sendRetry / $this->sendRetries");
-         $sentBytes = socket_send($socket, $buf, strlen($buf), 0);
+         $sentBytes = @socket_send($socket, $buf, strlen($buf), 0);
          $sendRetry++;
       }
    return $sentBytes;

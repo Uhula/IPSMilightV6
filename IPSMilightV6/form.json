@@ -1,7 +1,7 @@
 {
   "elements": [
-      { "type": "Label", "label": "Milight V6 Modul. Bitte Gateway(iBox)- und Lampendaten eingeben" },
-
+     { "type": "Button", "name": "Help", "label": "Eingabehinweise",
+        "onClick": "echo 'MiLightV6 Modul\n Siehe: https://github.com/Uhula/IPSMilightV6.git\n\n --- IP ---\n Die IP-Adresse der MiLightV6 iBox2\n\n --- Erlaubte Modi ---\n Addition aus: \n 1=Farbig\n 2=Weiss\n 4=Nacht\n 8=Disco\n 16=Anlernen\n 32=Ablernen\n\n --- Lichtvorlagen ---\n Angabe im JSON Format \n\n [ Einstellungen als Popup ]\n Funktioniert erst ab IPS Version 4.1';"},
       { "type": "ValidationTextBox", "name": "URL", "caption": "IP (x.x.x.x)" },
 
       { "type": "NumberSpinner", "name": "Port", "caption": "Port (5987)" },
@@ -10,7 +10,7 @@
         "options": [
             { "label": "RGBW", "value": 0 },
             { "label": "BRIDGE (iBox2)", "value": 1 },
-            { "label": "RGBWW", "value": 2 }
+            { "label": "RGBWW/RGB+CWW", "value": 2 }
         ]
       },
       { "type": "Select", "name": "Zone", "caption": "Lampenzone",
@@ -22,23 +22,33 @@
             { "label": "Zone 4", "value": 4 }
         ]
      },
-      { "type": "ValidationTextBox", "name": "Presets", "caption": "Modus-Presets" }
+      { "type": "Select", "name": "ColorAs", "caption": "Farbeingabe über",
+        "options": [
+            { "label": "Alle", "value": 0 },
+            { "label": "HSB-Slider", "value": 1 },
+            { "label": "RGB-Slider", "value": 2 },
+            { "label": "Farbrad", "value": 3 }
+        ]
+     },
+     { "type": "NumberSpinner", "name": "AllowedModes", "caption": "Erlaubte Modi" },
+     { "type": "ValidationTextBox", "name": "Presets", "caption": "Lichtvorlagen (JSON)" },
+     { "type": "CheckBox", "name": "ConfigAsPopup", "caption": "Einstellungen als Popup" }
     ],
 
     "actions": [
-      { "type": "Button", "name": "SetMode0", "label": "Aus", "onClick":"MILIGHTV6_SetMode($id, 0);"},
-      { "type": "NumberSpinner", "name": "ColorHue", "caption": "Farbwert 0..360°" },
-      { "type": "NumberSpinner", "name": "ColorSaturation", "caption": "Sättigung 0..100%" },
-      { "type": "NumberSpinner", "name": "ColorBrightness", "caption": "Helligkeit 0..100%"},
-      { "type": "Button", "name": "SetMode1", "label": "... dann [farbig ein]", "onClick":"MILIGHTV6_SetColorHue($id, $ColorHue);MILIGHTV6_SetColorSaturation($id, $ColorSaturation);MILIGHTV6_SetColorBrightness($id, $ColorBrightness);MILIGHTV6_SetMode($id, 1);"},
-      { "type": "NumberSpinner", "name": "WhiteTemperature", "caption": "Temper. 2700-6500K"},
-      { "type": "NumberSpinner", "name": "WhiteBrightness", "caption": "Helligkeit 0..100%"},
-      { "type": "Button", "name": "SetMode2", "label": "... dann [weiß ein]", "onClick":"MILIGHTV6_SetWhiteTemperature($id, $WhiteTemperature);MILIGHTV6_SetWhiteBrightness($id, $WhiteBrightness);MILIGHTV6_SetMode($id, 2);"},
-      { "type": "Button", "name": "SetMode3", "label": "Nachtmodus", "onClick":"MILIGHTV6_SetMode($id, 3);"},
-      { "type": "Button", "name": "SetMode4", "label": "Disco Modus", "onClick":"MILIGHTV6_SetMode($id, 4);"},
-      { "type": "Label", "label": "Innerhalb von 3 Sek nach dem Einschalten der Lampe drücken" },
-      { "type": "Button", "name": "SetMode5", "label": "Link neue Lampe", "onClick":"MILIGHTV6_SetMode($id, 5);"},
-      { "type": "Button", "name": "SetMode6", "label": "Unlink Lampe", "onClick":"MILIGHTV6_SetMode($id, 6);"}
+      { "type": "Label", "label": "An/Abzulernende Lampe innerhalb von 10 Sek nach dem [Klick] einschalten:" },
+      { "type": "Button", "name": "SetMode5", "label": "Neue Lampe in Zone anmelden", "onClick":"MILIGHTV6_SetMode($id, 16);"},
+      { "type": "Button", "name": "SetMode6", "label": "Lampe aus Zone abmelden", "onClick":"MILIGHTV6_SetMode($id, 32);"},
+      { "type": "Label", "label": "Erst entsprechende Parameter setzen, dann [Klick] zum Einschalten:" },
+      { "type": "Button", "name": "SetMode0", "label": "Lampe AUS", "onClick":"MILIGHTV6_SetMode($id, 0);"},
+      { "type": "NumberSpinner", "name": "ColorH", "caption": "Farbwert 0..360°" },
+      { "type": "NumberSpinner", "name": "ColorS", "caption": "Sättigung 0..100%" },
+      { "type": "NumberSpinner", "name": "ColorV", "caption": "Helligkeit 0..100%"},
+      { "type": "Button", "name": "SetMode1", "label": "Lampe FARBIG EIN", "onClick":"MILIGHTV6_SetColorH($id, $ColorH);MILIGHTV6_SetColorS($id, $ColorS);MILIGHTV6_SetColorB($id, $ColorV);MILIGHTV6_SetMode($id, 1);"},
+      { "type": "NumberSpinner", "name": "WhiteT", "caption": "Temper. 2700-6500K"},
+      { "type": "NumberSpinner", "name": "WhiteV", "caption": "Helligkeit 0..100%"},
+      { "type": "Button", "name": "SetMode2", "label": "Lampe WEISS EIN", "onClick":"MILIGHTV6_SetWhiteT($id, $WhiteT);MILIGHTV6_SetWhiteV($id, $WhiteV);MILIGHTV6_SetMode($id, 2);"},
+      { "type": "Button", "name": "SetMode3", "label": "Lampe Nachtmodus", "onClick":"MILIGHTV6_SetMode($id, 8);"}
     ],
 
     "status": [
