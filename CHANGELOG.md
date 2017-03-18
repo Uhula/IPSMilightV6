@@ -1,3 +1,2 @@
-### Version 0.9
-
+### Version 1.0 - 03.2017
 Erster Upload
