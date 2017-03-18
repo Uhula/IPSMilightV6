@@ -26,8 +26,8 @@ Sowohl für RGBWW als auch für RGBW sind je 4 Zonen (Gruppen) von Lampen anlern
 
 Ältere Milight Gateways/Controller, welche eine Treiberversion 2 bis 5 verwenden, sind nicht ansprechbar, da sich das Protokoll deutlich verändert hat.
 
-* [Beispiel dunkel](docs/MilightV6_Beispiel_Dark.png?raw=true "Beispeil dunkel")
-* [Beispiel hell](docs/MilightV6_Beispiel_Light.png?raw=true "Beispiel hell")
+* [Beispiel dunkel](DOCS/MilightV6_Beispiel_Dark.png?raw=true "Beispeil dunkel")
+* [Beispiel hell](DOCS/MilightV6_Beispiel_Light.png?raw=true "Beispiel hell")
 
 Die Beispiele verwenden den Material Design Skin - mit normalen IPS Skin sieht es anders aus.
 
@@ -61,7 +61,7 @@ Im Objektbaum der IP Symcon Managment Console über die Kern-Instanz "Module" fo
 
 Unter "Instanz hinzufügen" ist das 'MilightV6'-Modul unter dem Hersteller 'Milight' aufgeführt.  
 
-* [Eigenschaften](docs/MilightV6_Eigenschaften.png?raw=true "Eigenschaften")
+[Eigenschaften](DOCS/MilightV6_Eigenschaften.png?raw=true "Eigenschaften")
 
 __Konfigurationsseite__:
 
